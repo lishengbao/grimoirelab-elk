@@ -26,7 +26,7 @@
 import inspect
 import logging
 
-from grimoirelab_toolkit.datetime import unixtime_to_datetime
+from grimoirelab_toolkit.datetime import unixtime_to_datetime, str_to_datetime
 
 from datetime import datetime
 from ..enriched.utils import get_repository_filter, anonymize_url
@@ -153,7 +153,7 @@ class ElasticOcean(ElasticItems):
         item['metadata__timestamp'] = timestamp.isoformat()
 
     def feed(self, from_date=None, from_offset=None, category=None, branches=None,
-             latest_items=None, filter_classified=None, no_update=None):
+             latest_items=None, filter_classified=None, no_update=None, to_date=str_to_datetime("2100-01-01")):
         """Feed data in Elastic from Perceval"""
 
         if self.fetch_archive:
@@ -215,12 +215,13 @@ class ElasticOcean(ElasticItems):
         if no_update:
             params['no_update'] = no_update
             items = self.perceval_backend.fetch(**params)
-        elif latest_items:
-            params['latest_items'] = latest_items
-            items = self.perceval_backend.fetch(**params)
         elif last_update:
             last_update = last_update.replace(tzinfo=None)
             params['from_date'] = last_update
+            params['to_date'] = to_date
+            items = self.perceval_backend.fetch(**params)
+        elif latest_items:
+            params['latest_items'] = latest_items
             items = self.perceval_backend.fetch(**params)
         elif offset is not None:
             params['offset'] = offset
